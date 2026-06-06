@@ -25,9 +25,30 @@
       <input
         id="searchInput"
         type="search"
-        placeholder="Search your chats…"
+        placeholder='Search… use "quotes" for exact phrase'
         autocomplete="off"
       />
+      <div class="filters">
+        <label class="chk" title="Treat your search as a regular expression">
+          <input type="checkbox" id="regexToggle" /> regex
+        </label>
+        <select id="roleSelect" title="Whose messages to search">
+          <option value="any">Anyone</option>
+          <option value="you">You</option>
+          <option value="claude">Claude</option>
+        </select>
+        <select id="projectSelect" title="Filter by project">
+          <option value="any">Any project</option>
+          <option value="none">No project</option>
+        </select>
+        <select id="sortSelect" title="Sort order">
+          <option value="relevance">Best match</option>
+          <option value="recent">Most recent</option>
+        </select>
+        <input type="date" id="fromDate" title="From date" />
+        <input type="date" id="toDate" title="To date" />
+      </div>
+      <div id="searchError" class="search-error hidden"></div>
     </div>
 
     <div id="results" class="results">

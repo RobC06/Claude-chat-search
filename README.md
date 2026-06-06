@@ -8,8 +8,21 @@ stored locally in your own browser; nothing is sent to any outside server.
 
 - Downloads your conversations from Claude.ai using your existing login.
 - Stores them privately in your browser.
-- Gives you a **side panel** with instant keyword search, snippet previews,
-  and a link straight back to each original chat.
+- Gives you a **side panel** with instant search, snippet previews, and a link
+  straight back to each original chat.
+
+### Search features
+
+- **Keyword search** — type words; all must appear (snippets show the match).
+- **Exact phrase** — wrap text in `"double quotes"` to match it exactly.
+- **Regex** — tick the **regex** box to search with a regular expression.
+- **Filters** — narrow by **project**, **date range**, and **who said it**
+  (you vs Claude).
+- **Sort** — by best match or most recent.
+- **Match counts** — each result shows how many times your query appears.
+
+You can also browse with filters alone (no search text) — e.g. "every chat in
+Project X from last month".
 
 ## How it works (plain English)
 
