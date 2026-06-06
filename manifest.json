@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Chat Search",
+  "version": "0.1.0",
+  "description": "Full-text search across all your Claude.ai conversations, including chats inside projects. Everything stays on your machine.",
+  "permissions": ["sidePanel", "storage", "scripting", "tabs"],
+  "host_permissions": ["https://claude.ai/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Claude Chat Search (click to open search panel)"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
