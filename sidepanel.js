@@ -105,18 +105,57 @@ async function startSync() {
   showProgress(0);
 
   try {
-    try {
-      await chrome.tabs.sendMessage(tab.id, { type: "PING" });
-    } catch {
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["content.js"],
-      });
-    }
+    await ensureContentScript(tab.id);
     await chrome.tabs.sendMessage(tab.id, { type: "START_SYNC" });
   } catch (err) {
     finishSync();
     showStatus(`Couldn't start sync: ${err.message}`, true);
+  }
+}
+
+// Make sure our content script is running in the claude.ai tab.
+async function ensureContentScript(tabId) {
+  try {
+    await chrome.tabs.sendMessage(tabId, { type: "PING" });
+  } catch {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+  }
+}
+
+// Rename a chat from the panel. This writes to Claude's servers, so we ask the
+// user to confirm the new name first (the prompt is the confirmation step).
+async function renameChat(conv) {
+  const entered = window.prompt("Rename this chat to:", conv.name);
+  if (entered === null) return; // user cancelled
+  const newName = entered.trim();
+  if (!newName || newName === conv.name) return;
+
+  const tab = await getClaudeTab();
+  if (!tab) {
+    showStatus("Open claude.ai in a tab first, then try renaming again.", true);
+    return;
+  }
+
+  try {
+    await ensureContentScript(tab.id);
+    const resp = await chrome.tabs.sendMessage(tab.id, {
+      type: "RENAME",
+      orgId: conv.orgId || null,
+      convId: conv.id,
+      name: newName,
+    });
+    if (!resp || !resp.ok) throw new Error((resp && resp.error) || "unknown error");
+
+    // Update our local copy so search reflects the new name right away.
+    conv.name = newName;
+    await putConversation(conv);
+    showStatus(`Renamed to “${newName}”.`);
+    render();
+  } catch (err) {
+    showStatus(`Rename failed: ${err.message}`, true);
   }
 }
 
@@ -407,6 +446,18 @@ function paint(matches, hasQuery) {
       m.textContent = `${score} match${score === 1 ? "" : "es"}`;
       meta.appendChild(m);
     }
+
+    // Rename button — clicking it must not follow the result link.
+    const renameBtn = document.createElement("button");
+    renameBtn.type = "button";
+    renameBtn.className = "rename-btn";
+    renameBtn.textContent = "Rename";
+    renameBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      renameChat(conv);
+    });
+    meta.appendChild(renameBtn);
 
     const snip = document.createElement("div");
     snip.className = "snippet";

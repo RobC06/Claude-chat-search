@@ -51,6 +51,32 @@ function extractText(message) {
   return "";
 }
 
+// Rename a single conversation. This is a WRITE to Claude's servers, using the
+// same endpoint the website itself uses (a PUT with {"name": "..."}). If we
+// weren't told which org the chat is in, fall back to the first org (covers the
+// common single-account case).
+async function renameConversation(orgId, convId, name) {
+  if (!orgId) {
+    const orgs = await API.organizations();
+    orgId = orgs && orgs[0] && orgs[0].uuid;
+  }
+  if (!orgId) throw new Error("Could not determine your account.");
+  const res = await fetch(
+    `/api/organizations/${orgId}/chat_conversations/${convId}`,
+    {
+      method: "PUT",
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        "anthropic-client-platform": "web_claude_ai",
+      },
+      body: JSON.stringify({ name }),
+    }
+  );
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json().catch(() => ({}));
+}
+
 // Send a status/progress/data message up to the side panel.
 function send(msg) {
   // .catch() avoids noisy errors if the side panel happens to be closed.
@@ -112,6 +138,7 @@ async function syncAll() {
           type: "SYNC_CONVERSATION",
           conversation: {
             id: c.uuid,
+            orgId: orgId,
             name: c.name || full.name || "Untitled chat",
             projectId: c.project_uuid || null,
             projectName: c.project_uuid ? projectName[c.project_uuid] || null : null,
@@ -151,5 +178,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     );
     sendResponse({ started: true });
     return true;
+  }
+  if (msg.type === "RENAME") {
+    renameConversation(msg.orgId, msg.convId, msg.name)
+      .then(() => sendResponse({ ok: true }))
+      .catch((err) =>
+        sendResponse({ ok: false, error: String((err && err.message) || err) })
+      );
+    return true; // keep the channel open for the async reply
   }
 });

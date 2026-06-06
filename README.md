@@ -24,6 +24,12 @@ stored locally in your own browser; nothing is sent to any outside server.
 You can also browse with filters alone (no search text) — e.g. "every chat in
 Project X from last month".
 
+### Renaming chats
+
+Each result has a **Rename** button. Click it, type a new name, and the chat is
+renamed on Claude.ai (and updated locally). This needs a claude.ai tab open and
+that you're logged in. Renames take effect immediately on Claude's side.
+
 ## How it works (plain English)
 
 When you use Claude.ai, the website quietly asks its own backend for your list
