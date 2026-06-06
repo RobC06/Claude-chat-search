@@ -32,6 +32,12 @@
         <label class="chk" title="Treat your search as a regular expression">
           <input type="checkbox" id="regexToggle" /> regex
         </label>
+        <span
+          class="help"
+          tabindex="0"
+          title="Regex = pattern matching for power users.&#10;&#10;Leave OFF for normal searches (type words, or &quot;quotes&quot; for an exact phrase).&#10;&#10;Turn ON to use patterns, e.g.:&#10;  colou?r  -> color or colour&#10;  cat|dog  -> cat OR dog&#10;  error \d+  -> error followed by a number&#10;&#10;In this mode, punctuation like . ? * ( ) becomes special, so it's not for plain text."
+          >?</span
+        >
         <select id="roleSelect" title="Whose messages to search">
           <option value="any">Anyone</option>
           <option value="you">You</option>

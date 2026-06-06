@@ -142,6 +142,26 @@ button:disabled {
   cursor: pointer;
 }
 
+.filters .help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: help;
+  user-select: none;
+}
+
+.filters .help:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .search-error {
   margin-top: 6px;
   font-size: 13px;
