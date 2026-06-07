@@ -61,7 +61,17 @@ async function init() {
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) maybeAutoSync();
   });
-  setInterval(maybeAutoSync, 60 * 1000);
+  setInterval(maybeAutoSync, 20 * 1000);
+
+  // Refresh promptly when a claude.ai tab navigates (e.g. you start a new chat,
+  // which changes its URL) — so new chats show up within seconds, not a minute.
+  chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+    const url = (tab && tab.url) || changeInfo.url || "";
+    if (url.startsWith("https://claude.ai/") &&
+        (changeInfo.url || changeInfo.status === "complete")) {
+      maybeAutoSync();
+    }
+  });
 
   // And refresh once right now, as the panel opens.
   maybeAutoSync();
@@ -72,7 +82,7 @@ async function init() {
 let lastAutoSyncAt = 0;
 function maybeAutoSync() {
   if (syncing) return;
-  if (Date.now() - lastAutoSyncAt < 10 * 1000) return;
+  if (Date.now() - lastAutoSyncAt < 5 * 1000) return;
   lastAutoSyncAt = Date.now();
   startSync(true);
 }
