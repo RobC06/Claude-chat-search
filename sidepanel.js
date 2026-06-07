@@ -13,7 +13,6 @@ const els = {
   lastSync: document.getElementById("lastSync"),
   searchInput: document.getElementById("searchInput"),
   results: document.getElementById("results"),
-  emptyState: document.getElementById("emptyState"),
   regexToggle: document.getElementById("regexToggle"),
   roleSelect: document.getElementById("roleSelect"),
   projectSelect: document.getElementById("projectSelect"),
@@ -552,9 +551,8 @@ function paint(matches, hasQuery) {
 }
 
 function showEmptyHint() {
+  // Nothing to show until the user types or sets a filter.
   els.results.innerHTML = "";
-  els.emptyState.classList.remove("hidden");
-  els.results.appendChild(els.emptyState);
 }
 
 // ---------------------------------------------------------------------------
