@@ -9,7 +9,7 @@
   --mark: #ffe08a;
   --action: #2a7ab0;
   --info: #15803d;
-  --border-strong: #777777;
+  --border-strong: #5c5c5c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +22,7 @@
     --mark: #8a6d1f;
     --action: #5aa9dd;
     --info: #4ade80;
-    --border-strong: #909090;
+    --border-strong: #e6e6e6;
   }
 }
 
