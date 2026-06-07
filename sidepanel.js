@@ -275,6 +275,9 @@ async function handleSyncDone(msg) {
     if (msg.fetched) parts.push(`${msg.fetched} updated`);
     if (removed) parts.push(`${removed} removed`);
     showStatus(parts.length ? `Synced — ${parts.join(", ")}.` : "Already up to date.");
+    // This is just confirmation that the manual sync finished — "Last synced"
+    // already shows the lasting state, so fade the summary out shortly.
+    statusHideTimer = setTimeout(hideStatus, 4000);
   }
 }
 
@@ -327,10 +330,25 @@ chrome.runtime.onMessage.addListener((msg) => {
 // ---------------------------------------------------------------------------
 // Status + progress helpers
 // ---------------------------------------------------------------------------
+let statusHideTimer = null;
+
 function showStatus(message, isError = false) {
+  // A fresh message cancels any pending auto-hide (e.g. live progress updates).
+  if (statusHideTimer) {
+    clearTimeout(statusHideTimer);
+    statusHideTimer = null;
+  }
   els.status.textContent = message;
   els.status.classList.remove("hidden");
   els.status.classList.toggle("error", isError);
+}
+
+function hideStatus() {
+  if (statusHideTimer) {
+    clearTimeout(statusHideTimer);
+    statusHideTimer = null;
+  }
+  els.status.classList.add("hidden");
 }
 
 function showProgress(pct) {
