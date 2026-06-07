@@ -30,9 +30,11 @@ let syncing = false;
 // Startup
 // ---------------------------------------------------------------------------
 
-// Apply the system theme right away to avoid a flash; we refine it to match
-// claude.ai's own light/dark setting as soon as we can reach the Claude tab.
-applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches);
+// Start in light mode, then immediately check what claude.ai is showing and
+// switch to match. Light is the safe default (it's Claude's default too), so if
+// the check is ever delayed we fail to light rather than a wrong dark.
+applyTheme(false);
+refreshTheme();
 
 init();
 
@@ -89,15 +91,21 @@ function onActive() {
 }
 
 // Mirror the side panel's light/dark theme to claude.ai's current theme.
-async function refreshTheme() {
+// Retries briefly because, just after the panel opens, the Claude tab's content
+// script may not be ready to answer yet — without this the theme can get stuck.
+async function refreshTheme(retries = 5) {
   try {
     const tab = await getClaudeTab();
-    if (!tab) return; // no Claude tab open: keep the current (system) theme
+    if (!tab) return; // no Claude tab open: keep the light default
     const resp = await chrome.tabs.sendMessage(tab.id, { type: "GET_THEME" });
-    if (resp && resp.theme) applyTheme(resp.theme === "dark");
+    if (resp && resp.theme) {
+      applyTheme(resp.theme === "dark");
+      return;
+    }
   } catch (e) {
-    // Content script not ready yet; we'll try again on the next activity.
+    // Content script not ready yet; fall through to retry.
   }
+  if (retries > 0) setTimeout(() => refreshTheme(retries - 1), 300);
 }
 
 function applyTheme(isDark) {
