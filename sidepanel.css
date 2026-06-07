@@ -9,7 +9,7 @@
   --mark: #ffe08a;
   --action: #2a7ab0;
   --info: #15803d;
-  --border-strong: #a9a9a9;
+  --border-strong: #777777;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +22,7 @@
     --mark: #8a6d1f;
     --action: #5aa9dd;
     --info: #4ade80;
-    --border-strong: #6f6f6f;
+    --border-strong: #909090;
   }
 }
 
@@ -139,8 +139,8 @@ button:disabled {
 
 #searchInput:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.18);
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px rgba(42, 122, 176, 0.25);
 }
 
 .filters {
