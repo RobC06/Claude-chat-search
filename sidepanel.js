@@ -151,6 +151,12 @@ function populateProjectFilter() {
 // ---------------------------------------------------------------------------
 // Syncing: ask the Claude.ai tab to download all chats to us.
 // ---------------------------------------------------------------------------
+
+// Whether the CURRENT sync should show visible progress (the bar + status text).
+// Background auto-syncs stay silent to avoid a distracting "jump"; manual syncs
+// and the very first full sync (empty cache) show progress.
+let currentSyncVisible = false;
+
 async function startSync(auto = false) {
   if (syncing) return;
 
@@ -170,8 +176,11 @@ async function startSync(auto = false) {
   }
 
   syncing = true;
-  showStatus(auto ? "Refreshing…" : "Starting…");
-  showProgress(0);
+  currentSyncVisible = !auto || CACHE.length === 0;
+  if (currentSyncVisible) {
+    showStatus(auto ? "Refreshing…" : "Starting…");
+    showProgress(0);
+  }
 
   try {
     await ensureContentScript(tab.id);
@@ -251,13 +260,22 @@ async function handleSyncDone(msg) {
   const now = Date.now();
   await chrome.storage.local.set({ lastSync: now });
   await refreshCache();
-  render();
+
+  // Don't rebuild the results list out from under an active search on a silent
+  // background sync — it would shift what you're reading. The count still
+  // updates quietly; results refresh next time you change the query.
+  const searching = els.searchInput.value.trim().length > 0;
+  if (currentSyncVisible || !searching) render();
+
   updateLastSync(now);
 
-  const parts = [];
-  if (msg.fetched) parts.push(`${msg.fetched} updated`);
-  if (removed) parts.push(`${removed} removed`);
-  showStatus(parts.length ? `Synced — ${parts.join(", ")}.` : "Already up to date.");
+  // Only surface the "Synced — …" summary for visible (manual / first) syncs.
+  if (currentSyncVisible) {
+    const parts = [];
+    if (msg.fetched) parts.push(`${msg.fetched} updated`);
+    if (removed) parts.push(`${removed} removed`);
+    showStatus(parts.length ? `Synced — ${parts.join(", ")}.` : "Already up to date.");
+  }
 }
 
 // Show a friendly "Last synced: …" line.
@@ -285,10 +303,11 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (!msg) return;
   switch (msg.type) {
     case "SYNC_STATUS":
-      showStatus(msg.message);
+      if (currentSyncVisible) showStatus(msg.message);
       break;
     case "SYNC_PROGRESS":
-      if (msg.total) showProgress(Math.round((msg.done / msg.total) * 100));
+      if (currentSyncVisible && msg.total)
+        showProgress(Math.round((msg.done / msg.total) * 100));
       break;
     case "SYNC_CONVERSATION":
       putConversation(msg.conversation).catch((e) =>
@@ -300,7 +319,7 @@ chrome.runtime.onMessage.addListener((msg) => {
       break;
     case "SYNC_ERROR":
       finishSync();
-      showStatus(`Sync error: ${msg.error}`, true);
+      if (currentSyncVisible) showStatus(`Sync error: ${msg.error}`, true);
       break;
   }
 });
