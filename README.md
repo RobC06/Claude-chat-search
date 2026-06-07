@@ -72,6 +72,11 @@ delete on Claude are removed from search too. A green **chat count** and
 - **Local only.** Your chats live in this browser on this computer. If you want
   search across multiple devices later, that's when we'd add a small server
   (e.g. MongoDB on Railway).
+- **Panel shows only on Claude.** By default the search panel only appears on
+  claude.ai tabs (it hides when you switch away). Uncheck **"Only on Claude.ai"**
+  at the top of the panel to let it show on every tab. (Chrome doesn't allow
+  extensions to open the side panel automatically, so you always open it by
+  clicking the toolbar icon.)
 - **Storage size.** Browsers limit local storage. A very large chat history
   might not fully fit — that's another reason you might move to a server later.
 - **Keep the panel open during sync.** Closing it mid-sync stops the download

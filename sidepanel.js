@@ -6,6 +6,7 @@
 // Grab the page elements we'll update.
 const els = {
   syncLink: document.getElementById("syncLink"),
+  scopeToggle: document.getElementById("scopeToggle"),
   chatCount: document.getElementById("chatCount"),
   status: document.getElementById("status"),
   progressWrap: document.getElementById("progressWrap"),
@@ -39,8 +40,18 @@ init();
 async function init() {
   await refreshCache();
 
-  const { lastSync } = await chrome.storage.local.get("lastSync");
+  const { lastSync, showOnlyOnClaude } = await chrome.storage.local.get([
+    "lastSync",
+    "showOnlyOnClaude",
+  ]);
   updateLastSync(lastSync);
+
+  // "Only on Claude.ai" defaults to on. The background script reads this setting
+  // and enables/disables the panel per tab accordingly.
+  els.scopeToggle.checked = showOnlyOnClaude !== false;
+  els.scopeToggle.addEventListener("change", () => {
+    chrome.storage.local.set({ showOnlyOnClaude: els.scopeToggle.checked });
+  });
 
   els.searchInput.addEventListener("input", render);
   // Any filter/sort change re-runs the search.

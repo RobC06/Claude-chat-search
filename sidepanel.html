@@ -8,7 +8,15 @@
   </head>
   <body>
     <header>
-      <h1>Claude Chat Search</h1>
+      <div class="header-top">
+        <h1>Claude Chat Search</h1>
+        <label
+          class="scope-toggle"
+          title="When checked, this panel only appears on claude.ai tabs. Uncheck to show it on every tab."
+        >
+          <input type="checkbox" id="scopeToggle" /> Only on Claude.ai
+        </label>
+      </div>
       <div id="chatCount" class="chat-count"></div>
       <div id="lastSync" class="last-sync"></div>
       <div id="status" class="status hidden"></div>
