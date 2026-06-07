@@ -47,6 +47,17 @@ async function getAllConversations() {
   });
 }
 
+// Remove a single conversation (used when a chat was deleted on Claude.ai).
+async function deleteConversation(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 async function clearConversations() {
   const db = await openDB();
   return new Promise((resolve, reject) => {

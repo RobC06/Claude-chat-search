@@ -83,6 +83,12 @@ button:disabled {
   color: #c0392b;
 }
 
+.last-sync {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .hidden {
   display: none;
 }

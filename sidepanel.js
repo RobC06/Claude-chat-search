@@ -10,6 +10,7 @@ const els = {
   status: document.getElementById("status"),
   progressWrap: document.getElementById("progressWrap"),
   progressBar: document.getElementById("progressBar"),
+  lastSync: document.getElementById("lastSync"),
   searchInput: document.getElementById("searchInput"),
   results: document.getElementById("results"),
   emptyState: document.getElementById("emptyState"),
@@ -33,6 +34,10 @@ init();
 
 async function init() {
   await refreshCache();
+
+  const { lastSync } = await chrome.storage.local.get("lastSync");
+  updateLastSync(lastSync);
+
   els.searchInput.addEventListener("input", render);
   // Any filter/sort change re-runs the search.
   for (const el of [
@@ -45,7 +50,11 @@ async function init() {
   ]) {
     el.addEventListener("change", render);
   }
-  els.syncBtn.addEventListener("click", startSync);
+  els.syncBtn.addEventListener("click", () => startSync(false));
+
+  // Automatically refresh when the panel opens (incremental, so it's quick).
+  // Stays quiet and does nothing if claude.ai isn't open.
+  startSync(true);
 }
 
 async function refreshCache() {
@@ -86,11 +95,16 @@ function populateProjectFilter() {
 // ---------------------------------------------------------------------------
 // Syncing: ask the Claude.ai tab to download all chats to us.
 // ---------------------------------------------------------------------------
-async function startSync() {
+async function startSync(auto = false) {
   if (syncing) return;
 
   const tab = await getClaudeTab();
   if (!tab) {
+    if (auto) {
+      // On auto-open we don't nag or force-open a tab — just hint.
+      els.lastSync.textContent = "Open claude.ai to refresh";
+      return;
+    }
     showStatus(
       "Please open claude.ai in a tab and make sure you're logged in, then click Sync again.",
       true
@@ -101,12 +115,15 @@ async function startSync() {
 
   syncing = true;
   els.syncBtn.disabled = true;
-  showStatus("Starting…");
+  showStatus(auto ? "Refreshing…" : "Starting…");
   showProgress(0);
 
   try {
     await ensureContentScript(tab.id);
-    await chrome.tabs.sendMessage(tab.id, { type: "START_SYNC" });
+    // Tell the content script what we already have, so it only fetches changes.
+    const known = {};
+    for (const c of CACHE) known[c.id] = c.updatedAt || "";
+    await chrome.tabs.sendMessage(tab.id, { type: "START_SYNC", known });
   } catch (err) {
     finishSync();
     showStatus(`Couldn't start sync: ${err.message}`, true);
@@ -165,6 +182,45 @@ function finishSync() {
   hideProgress();
 }
 
+// Wrap up a sync: drop chats deleted on Claude, save the time, report results.
+async function handleSyncDone(msg) {
+  finishSync();
+
+  let removed = 0;
+  if (Array.isArray(msg.allIds)) {
+    const keep = new Set(msg.allIds);
+    const gone = CACHE.filter((c) => !keep.has(c.id));
+    await Promise.all(gone.map((c) => deleteConversation(c.id)));
+    removed = gone.length;
+  }
+
+  const now = Date.now();
+  await chrome.storage.local.set({ lastSync: now });
+  await refreshCache();
+  render();
+  updateLastSync(now);
+
+  const parts = [];
+  if (msg.fetched) parts.push(`${msg.fetched} updated`);
+  if (removed) parts.push(`${removed} removed`);
+  showStatus(parts.length ? `Synced — ${parts.join(", ")}.` : "Already up to date.");
+}
+
+// Show a friendly "Last synced: …" line.
+function updateLastSync(ts) {
+  els.lastSync.textContent = ts ? `Last synced: ${relativeTime(ts)}` : "";
+}
+
+function relativeTime(ts) {
+  const secs = Math.round((Date.now() - ts) / 1000);
+  if (secs < 60) return "just now";
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  return new Date(ts).toLocaleString();
+}
+
 async function getClaudeTab() {
   const tabs = await chrome.tabs.query({ url: "https://claude.ai/*" });
   return tabs[0] || null;
@@ -186,10 +242,7 @@ chrome.runtime.onMessage.addListener((msg) => {
       );
       break;
     case "SYNC_DONE":
-      finishSync();
-      showStatus(`Done. Synced ${msg.total} conversations.`);
-      chrome.storage.local.set({ lastSync: Date.now() });
-      refreshCache().then(render);
+      handleSyncDone(msg);
       break;
     case "SYNC_ERROR":
       finishSync();

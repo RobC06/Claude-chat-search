@@ -96,8 +96,12 @@ async function mapLimit(items, limit, fn) {
   await Promise.all(workers);
 }
 
-// The main routine: download every conversation and stream them to the panel.
-async function syncAll() {
+// The main routine. `known` is a map of { conversationId: lastUpdatedAt } that
+// we already have stored — so we only download the messages for chats that are
+// new or have changed since last time (incremental sync). We also collect every
+// current conversation id so the panel can drop chats that were deleted.
+async function syncAll(known) {
+  known = known || {};
   send({ type: "SYNC_STATUS", message: "Finding your account…" });
   const orgs = await API.organizations();
   if (!Array.isArray(orgs) || orgs.length === 0) {
@@ -105,6 +109,8 @@ async function syncAll() {
   }
 
   let grandTotal = 0;
+  let fetched = 0;
+  const allIds = [];
 
   for (const org of orgs) {
     const orgId = org.uuid;
@@ -121,12 +127,22 @@ async function syncAll() {
     const convos = await API.conversations(orgId);
     send({
       type: "SYNC_STATUS",
-      message: `Found ${convos.length} conversations. Downloading…`,
+      message: `Checking ${convos.length} conversations…`,
       total: convos.length,
     });
 
     let done = 0;
     await mapLimit(convos, 4, async (c) => {
+      allIds.push(c.uuid);
+
+      // Skip the expensive message download if we already have this version.
+      const prev = known[c.uuid];
+      if (prev && prev === (c.updated_at || "")) {
+        done++;
+        send({ type: "SYNC_PROGRESS", done, total: convos.length });
+        return;
+      }
+
       try {
         const full = await API.conversation(orgId, c.uuid);
         const messages = (full.chat_messages || []).map((m, i) => ({
@@ -148,6 +164,7 @@ async function syncAll() {
             messages,
           },
         });
+        fetched++;
       } catch (e) {
         send({
           type: "SYNC_STATUS",
@@ -162,7 +179,7 @@ async function syncAll() {
     grandTotal += convos.length;
   }
 
-  send({ type: "SYNC_DONE", total: grandTotal });
+  send({ type: "SYNC_DONE", total: grandTotal, fetched, allIds });
 }
 
 // Listen for commands from the side panel.
@@ -173,7 +190,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return; // synchronous reply
   }
   if (msg.type === "START_SYNC") {
-    syncAll().catch((err) =>
+    syncAll(msg.known || {}).catch((err) =>
       send({ type: "SYNC_ERROR", error: String((err && err.message) || err) })
     );
     sendResponse({ started: true });

@@ -58,7 +58,14 @@ computer and searched there.
 4. Type in the search box. Results appear instantly. Click any result to jump
    to that chat on Claude.ai.
 
-Re-run **Sync chats** whenever you want to pull in new conversations.
+### Keeping things up to date (automatic)
+
+After the first full sync, the panel **refreshes itself every time you open it**
+(as long as claude.ai is open in a tab). This refresh is **incremental** — it
+only downloads chats that are new or have changed, so it's quick. Chats you
+delete on Claude are removed from search too. A **"Last synced"** line shows how
+fresh your index is, and the manual **Sync chats** button is always there if you
+want to force a refresh.
 
 ## Notes & limits (v1)
 
@@ -68,7 +75,8 @@ Re-run **Sync chats** whenever you want to pull in new conversations.
 - **Storage size.** Browsers limit local storage. A very large chat history
   might not fully fit — that's another reason you might move to a server later.
 - **Keep the panel open during sync.** Closing it mid-sync stops the download
-  (just click Sync again to resume from scratch).
+  (just reopen the panel — it refreshes automatically, and incremental sync
+  means it only fetches what it still needs).
 
 ## Project layout
 
