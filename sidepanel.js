@@ -198,7 +198,7 @@ function updateProjectLabel() {
   const allProjects = boxes.length > 0 && checkedProjects.length === boxes.length;
 
   if (names.length === 0 && checkedProjects.length === 0) {
-    els.projectLabel.textContent = "Any project";
+    els.projectLabel.textContent = "All projects";
   } else if (allProjects && names.length === 0) {
     els.projectLabel.textContent = "All projects";
   } else {
