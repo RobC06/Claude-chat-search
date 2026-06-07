@@ -19,7 +19,8 @@ const els = {
   projectLabel: document.getElementById("projectLabel"),
   projectMenu: document.getElementById("projectMenu"),
   projectList: document.getElementById("projectList"),
-  projectAll: document.getElementById("projectAll"),
+  projectNone: document.getElementById("projectNone"),
+  projectAllBox: document.getElementById("projectAllBox"),
   projectClear: document.getElementById("projectClear"),
   sortSelect: document.getElementById("sortSelect"),
   fromDate: document.getElementById("fromDate"),
@@ -61,8 +62,7 @@ async function init() {
     el.addEventListener("change", render);
   }
 
-  // Project multi-select dropdown: open/close, outside-click to close, and
-  // the "Select all" / "Clear" shortcuts.
+  // Project multi-select dropdown: open/close and outside-click to close.
   els.projectBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     const closed = els.projectMenu.classList.toggle("hidden");
@@ -73,17 +73,22 @@ async function init() {
     els.projectMenu.classList.add("hidden");
     els.projectBtn.setAttribute("aria-expanded", "false");
   });
-  // The static "No project" checkbox (project checkboxes are wired on creation).
-  els.projectMenu
-    .querySelector('input[value="none"]')
-    .addEventListener("change", onProjectChange);
-  els.projectAll.addEventListener("click", () => {
-    projectCheckboxes().forEach((b) => (b.checked = true));
-    onProjectChange();
+  // "No project" is independent of the projects (project checkboxes are wired
+  // when created in populateProjectFilter).
+  els.projectNone.addEventListener("change", onProjectChange);
+  // "All projects" is a select-all toggle for the individual projects only.
+  els.projectAllBox.addEventListener("change", () => {
+    const on = els.projectAllBox.checked;
+    projectBoxes().forEach((b) => (b.checked = on));
+    updateProjectLabel();
+    render();
   });
   els.projectClear.addEventListener("click", () => {
-    projectCheckboxes().forEach((b) => (b.checked = false));
-    onProjectChange();
+    els.projectNone.checked = false;
+    els.projectAllBox.checked = false;
+    projectBoxes().forEach((b) => (b.checked = false));
+    updateProjectLabel();
+    render();
   });
   els.syncLink.addEventListener("click", (e) => {
     e.preventDefault();
@@ -162,32 +167,52 @@ function updateChatCount() {
   els.chatCount.textContent = `${n} chat${n === 1 ? "" : "s"} synced`;
 }
 
-// All project checkboxes currently in the menu (including the fixed "No project").
-function projectCheckboxes() {
-  return [...els.projectMenu.querySelectorAll('input[type="checkbox"]')];
+// The individual per-project checkboxes (NOT "No project" or "All projects").
+function projectBoxes() {
+  return [...els.projectList.querySelectorAll('input[type="checkbox"]')];
 }
 
-// The values (project ids, plus "none") that are currently ticked.
+// The values that actually filter results: "none" (for project-less chats)
+// plus the ids of any ticked projects. "All projects" is just a UI toggle.
 function selectedProjectValues() {
-  return projectCheckboxes()
+  const vals = [];
+  if (els.projectNone.checked) vals.push("none");
+  projectBoxes()
     .filter((b) => b.checked)
-    .map((b) => b.value);
+    .forEach((b) => vals.push(b.value));
+  return vals;
+}
+
+// Keep the "All projects" box in sync: ticked only when every project is ticked.
+function syncAllBox() {
+  const boxes = projectBoxes();
+  els.projectAllBox.checked = boxes.length > 0 && boxes.every((b) => b.checked);
 }
 
 // Update the button label to reflect the current selection.
 function updateProjectLabel() {
-  const checked = projectCheckboxes().filter((b) => b.checked);
-  if (checked.length === 0) {
+  const names = [];
+  if (els.projectNone.checked) names.push("No project");
+  const boxes = projectBoxes();
+  const checkedProjects = boxes.filter((b) => b.checked);
+  const allProjects = boxes.length > 0 && checkedProjects.length === boxes.length;
+
+  if (names.length === 0 && checkedProjects.length === 0) {
     els.projectLabel.textContent = "Any project";
-  } else if (checked.length === 1) {
-    els.projectLabel.textContent = checked[0].closest("label").textContent.trim();
+  } else if (allProjects && names.length === 0) {
+    els.projectLabel.textContent = "All projects";
   } else {
-    els.projectLabel.textContent = `${checked.length} projects`;
+    const total = names.length + checkedProjects.length;
+    els.projectLabel.textContent =
+      total === 1
+        ? names[0] || checkedProjects[0].closest("label").textContent.trim()
+        : `${total} projects`;
   }
 }
 
-// A project box was toggled (or all/clear pressed): refresh label + results.
+// A project box was toggled: keep "All projects" in sync, refresh label + results.
 function onProjectChange() {
+  syncAllBox();
   updateProjectLabel();
   render();
 }
@@ -195,7 +220,11 @@ function onProjectChange() {
 // Build the per-project checkboxes from whatever projects appear in the data,
 // keeping any selections the user already made.
 function populateProjectFilter() {
-  const prevSelected = new Set(selectedProjectValues());
+  const prevSelected = new Set(
+    projectBoxes()
+      .filter((b) => b.checked)
+      .map((b) => b.value)
+  );
   const projects = new Map(); // id -> name
   for (const conv of CACHE) {
     if (conv.projectId) projects.set(conv.projectId, conv.projectName || "Project");
@@ -214,6 +243,7 @@ function populateProjectFilter() {
       label.appendChild(document.createTextNode(" " + name));
       els.projectList.appendChild(label);
     });
+  syncAllBox();
   updateProjectLabel();
 }
 
