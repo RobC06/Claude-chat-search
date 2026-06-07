@@ -5,8 +5,8 @@
 
 // Grab the page elements we'll update.
 const els = {
-  syncBtn: document.getElementById("syncBtn"),
-  count: document.getElementById("count"),
+  syncLink: document.getElementById("syncLink"),
+  chatCount: document.getElementById("chatCount"),
   status: document.getElementById("status"),
   progressWrap: document.getElementById("progressWrap"),
   progressBar: document.getElementById("progressBar"),
@@ -50,7 +50,10 @@ async function init() {
   ]) {
     el.addEventListener("change", render);
   }
-  els.syncBtn.addEventListener("click", () => startSync(false));
+  els.syncLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    startSync(false);
+  });
 
   // Keep an open panel fresh: refresh when it regains focus / becomes visible,
   // and on a gentle timer while it stays open. All incremental, so it's cheap.
@@ -76,14 +79,13 @@ function maybeAutoSync() {
 
 async function refreshCache() {
   CACHE = await getAllConversations();
-  updateCount();
+  updateChatCount();
   populateProjectFilter();
 }
 
-function updateCount() {
-  els.count.textContent = CACHE.length
-    ? `${CACHE.length} chats indexed`
-    : "no chats yet";
+function updateChatCount() {
+  const n = CACHE.length;
+  els.chatCount.textContent = `${n} chat${n === 1 ? "" : "s"} synced`;
 }
 
 // Build the project dropdown from whatever projects appear in the data.
@@ -131,7 +133,6 @@ async function startSync(auto = false) {
   }
 
   syncing = true;
-  els.syncBtn.disabled = true;
   showStatus(auto ? "Refreshing…" : "Starting…");
   showProgress(0);
 
@@ -195,7 +196,6 @@ async function renameChat(conv) {
 
 function finishSync() {
   syncing = false;
-  els.syncBtn.disabled = false;
   hideProgress();
 }
 

@@ -8,6 +8,7 @@
   --hover: #f6f4f1;
   --mark: #ffe08a;
   --action: #2a7ab0;
+  --info: #15803d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +20,7 @@
     --hover: #2a2a2a;
     --mark: #8a6d1f;
     --action: #5aa9dd;
+    --info: #4ade80;
   }
 }
 
@@ -47,10 +49,11 @@ h1 {
   margin: 0 0 8px;
 }
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.chat-count {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--info);
 }
 
 button {
@@ -68,9 +71,18 @@ button:disabled {
   cursor: default;
 }
 
-.count {
-  color: var(--muted);
+.helper {
+  margin: 0;
+  padding: 10px 14px 0;
   font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sync-link {
+  color: var(--action);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .status {
@@ -84,9 +96,9 @@ button:disabled {
 }
 
 .last-sync {
-  margin-top: 6px;
+  margin-top: 2px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--info);
 }
 
 .hidden {

@@ -9,18 +9,19 @@
   <body>
     <header>
       <h1>Claude Chat Search</h1>
-      <div class="toolbar">
-        <button id="syncBtn" title="Download your chats from Claude.ai">
-          Sync chats
-        </button>
-        <span id="count" class="count"></span>
-      </div>
+      <div id="chatCount" class="chat-count"></div>
+      <div id="lastSync" class="last-sync"></div>
       <div id="status" class="status hidden"></div>
       <div id="progressWrap" class="progress-wrap hidden">
         <div id="progressBar" class="progress-bar"></div>
       </div>
-      <div id="lastSync" class="last-sync"></div>
     </header>
+
+    <p class="helper">
+      Claude automatically syncs messages to your computer for searching.
+      If you have problems, click <a id="syncLink" class="sync-link">Sync Chats</a>
+      to run a manual sync.
+    </p>
 
     <div class="search-box">
       <input
@@ -59,10 +60,7 @@
     </div>
 
     <div id="results" class="results">
-      <p class="empty" id="emptyState">
-        Click <strong>Sync chats</strong> above to download your conversations,
-        then start typing to search.
-      </p>
+      <p class="empty" id="emptyState">Start typing above to search your chats.</p>
     </div>
 
     <!-- Load the database helper first, then the panel logic. -->

@@ -63,9 +63,9 @@ computer and searched there.
 After the first full sync, the panel **refreshes itself every time you open it**
 (as long as claude.ai is open in a tab). This refresh is **incremental** — it
 only downloads chats that are new or have changed, so it's quick. Chats you
-delete on Claude are removed from search too. A **"Last synced"** line shows how
-fresh your index is, and the manual **Sync chats** button is always there if you
-want to force a refresh.
+delete on Claude are removed from search too. A green **chat count** and
+**"Last synced"** line show how fresh your index is, and the **Sync Chats** link
+(in the helper text) is always there if you want to force a manual refresh.
 
 ## Notes & limits (v1)
 
