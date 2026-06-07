@@ -52,8 +52,25 @@ async function init() {
   }
   els.syncBtn.addEventListener("click", () => startSync(false));
 
-  // Automatically refresh when the panel opens (incremental, so it's quick).
-  // Stays quiet and does nothing if claude.ai isn't open.
+  // Keep an open panel fresh: refresh when it regains focus / becomes visible,
+  // and on a gentle timer while it stays open. All incremental, so it's cheap.
+  window.addEventListener("focus", maybeAutoSync);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) maybeAutoSync();
+  });
+  setInterval(maybeAutoSync, 60 * 1000);
+
+  // And refresh once right now, as the panel opens.
+  maybeAutoSync();
+}
+
+// Run an automatic (incremental) sync, but no more often than every 10s, so
+// rapid focus changes don't trigger a flurry of syncs.
+let lastAutoSyncAt = 0;
+function maybeAutoSync() {
+  if (syncing) return;
+  if (Date.now() - lastAutoSyncAt < 10 * 1000) return;
+  lastAutoSyncAt = Date.now();
   startSync(true);
 }
 
