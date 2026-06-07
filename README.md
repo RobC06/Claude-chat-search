@@ -1,4 +1,4 @@
-# Claude Chat Search
+# Simple Search for Claude Chats
 
 A Chrome extension that lets you **search across all your Claude.ai
 conversations** — including chats that live inside Projects. Everything is
@@ -47,12 +47,12 @@ computer and searched there.
 2. Open Chrome and go to `chrome://extensions`.
 3. Turn on **Developer mode** (toggle in the top-right corner).
 4. Click **Load unpacked** and select this folder.
-5. You'll see "Claude Chat Search" appear. Pin it to your toolbar if you like.
+5. You'll see "Simple Search for Claude Chats" appear. Pin it to your toolbar if you like.
 
 ## Using it
 
 1. Open [claude.ai](https://claude.ai) in a tab and make sure you're logged in.
-2. Click the **Claude Chat Search** icon in your toolbar — the side panel opens.
+2. Click the **Simple Search for Claude Chats** icon in your toolbar — the side panel opens.
 3. Click **Sync chats**. The first sync downloads all your conversations; this
    can take a little while if you have a lot. A progress bar shows how it's going.
 4. Type in the search box. Results appear instantly. Click any result to jump
