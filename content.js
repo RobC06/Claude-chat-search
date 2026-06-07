@@ -77,6 +77,30 @@ async function renameConversation(orgId, convId, name) {
   return res.json().catch(() => ({}));
 }
 
+// Detect whether claude.ai is currently showing in dark or light mode. We read
+// the page's actual rendered background color (works regardless of how Claude
+// implements its theme — light, dark, or "match system").
+function bgColorOf(el) {
+  const bg = el && getComputedStyle(el).backgroundColor;
+  const nums = bg && bg.match(/\d+(\.\d+)?/g);
+  if (!nums) return null;
+  const arr = nums.map(Number);
+  if (arr.length >= 4 && arr[3] === 0) return null; // fully transparent
+  return arr;
+}
+
+function detectClaudeTheme() {
+  try {
+    const arr = bgColorOf(document.body) || bgColorOf(document.documentElement);
+    if (!arr) return "light";
+    const [r, g, b] = arr;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance < 128 ? "dark" : "light";
+  } catch (e) {
+    return "light";
+  }
+}
+
 // Send a status/progress/data message up to the side panel.
 function send(msg) {
   // .catch() avoids noisy errors if the side panel happens to be closed.
@@ -187,6 +211,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (!msg) return;
   if (msg.type === "PING") {
     sendResponse({ pong: true });
+    return; // synchronous reply
+  }
+  if (msg.type === "GET_THEME") {
+    sendResponse({ theme: detectClaudeTheme() });
     return; // synchronous reply
   }
   if (msg.type === "START_SYNC") {

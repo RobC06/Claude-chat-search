@@ -12,18 +12,19 @@
   --border-strong: #5c5c5c;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1f1f1f;
-    --fg: #ececec;
-    --muted: #a0a0a0;
-    --border: #3a3a3a;
-    --hover: #2a2a2a;
-    --mark: #8a6d1f;
-    --action: #5aa9dd;
-    --info: #4ade80;
-    --border-strong: #e6e6e6;
-  }
+/* Dark theme is applied by adding the "dark" class to <html> (see sidepanel.js).
+   This lets us mirror Claude.ai's own light/dark setting instead of only the
+   operating system's. */
+:root.dark {
+  --bg: #1f1f1f;
+  --fg: #ececec;
+  --muted: #a0a0a0;
+  --border: #3a3a3a;
+  --hover: #2a2a2a;
+  --mark: #8a6d1f;
+  --action: #5aa9dd;
+  --info: #4ade80;
+  --border-strong: #e6e6e6;
 }
 
 * {

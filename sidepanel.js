@@ -29,6 +29,11 @@ let syncing = false;
 // ---------------------------------------------------------------------------
 // Startup
 // ---------------------------------------------------------------------------
+
+// Apply the system theme right away to avoid a flash; we refine it to match
+// claude.ai's own light/dark setting as soon as we can reach the Claude tab.
+applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches);
+
 init();
 
 async function init() {
@@ -56,24 +61,47 @@ async function init() {
 
   // Keep an open panel fresh: refresh when it regains focus / becomes visible,
   // and on a gentle timer while it stays open. All incremental, so it's cheap.
-  window.addEventListener("focus", maybeAutoSync);
+  window.addEventListener("focus", onActive);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) maybeAutoSync();
+    if (!document.hidden) onActive();
   });
   setInterval(maybeAutoSync, 20 * 1000);
 
-  // Refresh promptly when a claude.ai tab navigates (e.g. you start a new chat,
-  // which changes its URL) — so new chats show up within seconds, not a minute.
+  // React promptly when a claude.ai tab navigates (e.g. you start a new chat,
+  // which changes its URL, or you toggle Claude's theme) — refresh data + theme.
   chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
     const url = (tab && tab.url) || changeInfo.url || "";
     if (url.startsWith("https://claude.ai/") &&
         (changeInfo.url || changeInfo.status === "complete")) {
       maybeAutoSync();
+      refreshTheme();
     }
   });
 
   // And refresh once right now, as the panel opens.
+  onActive();
+}
+
+// Things to do whenever the panel becomes active: refresh data and match theme.
+function onActive() {
   maybeAutoSync();
+  refreshTheme();
+}
+
+// Mirror the side panel's light/dark theme to claude.ai's current theme.
+async function refreshTheme() {
+  try {
+    const tab = await getClaudeTab();
+    if (!tab) return; // no Claude tab open: keep the current (system) theme
+    const resp = await chrome.tabs.sendMessage(tab.id, { type: "GET_THEME" });
+    if (resp && resp.theme) applyTheme(resp.theme === "dark");
+  } catch (e) {
+    // Content script not ready yet; we'll try again on the next activity.
+  }
+}
+
+function applyTheme(isDark) {
+  document.documentElement.classList.toggle("dark", isDark);
 }
 
 // Run an automatic (incremental) sync, but no more often than every 10s, so
