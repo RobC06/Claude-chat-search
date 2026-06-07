@@ -451,7 +451,7 @@ function paint(matches, hasQuery) {
     const renameBtn = document.createElement("button");
     renameBtn.type = "button";
     renameBtn.className = "rename-btn";
-    renameBtn.textContent = "Rename";
+    renameBtn.textContent = "RENAME";
     renameBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();

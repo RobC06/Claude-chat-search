@@ -7,6 +7,7 @@
   --accent-fg: #ffffff;
   --hover: #f6f4f1;
   --mark: #ffe08a;
+  --action: #2a7ab0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +18,7 @@
     --border: #3a3a3a;
     --hover: #2a2a2a;
     --mark: #8a6d1f;
+    --action: #5aa9dd;
   }
 }
 
@@ -176,10 +178,10 @@ button:disabled {
 .result .rename-btn {
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--action);
   font-size: 12px;
   padding: 0;
-  margin-left: 8px;
+  margin-left: 24px;
   cursor: pointer;
   text-decoration: underline;
 }
