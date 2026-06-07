@@ -45,10 +45,27 @@
           <option value="you">You</option>
           <option value="claude">Claude</option>
         </select>
-        <select id="projectSelect" title="Filter by project">
-          <option value="any">Any project</option>
-          <option value="none">No project</option>
-        </select>
+        <div class="dd-wrap" id="projectFilter">
+          <button
+            type="button"
+            class="proj-btn"
+            id="projectBtn"
+            title="Filter by project — tick any number"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span id="projectLabel">Any project</span
+            ><span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="proj-menu hidden" id="projectMenu">
+            <div class="proj-actions">
+              <a id="projectAll">Select all</a><a id="projectClear">Clear</a>
+            </div>
+            <label><input type="checkbox" value="none" /> No project</label>
+            <div class="proj-divider"></div>
+            <div id="projectList"></div>
+          </div>
+        </div>
         <select id="sortSelect" title="Sort order">
           <option value="relevance">Best match</option>
           <option value="recent">Most recent</option>

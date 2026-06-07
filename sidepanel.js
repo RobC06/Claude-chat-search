@@ -15,7 +15,12 @@ const els = {
   results: document.getElementById("results"),
   regexToggle: document.getElementById("regexToggle"),
   roleSelect: document.getElementById("roleSelect"),
-  projectSelect: document.getElementById("projectSelect"),
+  projectBtn: document.getElementById("projectBtn"),
+  projectLabel: document.getElementById("projectLabel"),
+  projectMenu: document.getElementById("projectMenu"),
+  projectList: document.getElementById("projectList"),
+  projectAll: document.getElementById("projectAll"),
+  projectClear: document.getElementById("projectClear"),
   sortSelect: document.getElementById("sortSelect"),
   fromDate: document.getElementById("fromDate"),
   toDate: document.getElementById("toDate"),
@@ -49,13 +54,37 @@ async function init() {
   for (const el of [
     els.regexToggle,
     els.roleSelect,
-    els.projectSelect,
     els.sortSelect,
     els.fromDate,
     els.toDate,
   ]) {
     el.addEventListener("change", render);
   }
+
+  // Project multi-select dropdown: open/close, outside-click to close, and
+  // the "Select all" / "Clear" shortcuts.
+  els.projectBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const closed = els.projectMenu.classList.toggle("hidden");
+    els.projectBtn.setAttribute("aria-expanded", String(!closed));
+  });
+  els.projectMenu.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => {
+    els.projectMenu.classList.add("hidden");
+    els.projectBtn.setAttribute("aria-expanded", "false");
+  });
+  // The static "No project" checkbox (project checkboxes are wired on creation).
+  els.projectMenu
+    .querySelector('input[value="none"]')
+    .addEventListener("change", onProjectChange);
+  els.projectAll.addEventListener("click", () => {
+    projectCheckboxes().forEach((b) => (b.checked = true));
+    onProjectChange();
+  });
+  els.projectClear.addEventListener("click", () => {
+    projectCheckboxes().forEach((b) => (b.checked = false));
+    onProjectChange();
+  });
   els.syncLink.addEventListener("click", (e) => {
     e.preventDefault();
     startSync(false);
@@ -133,27 +162,59 @@ function updateChatCount() {
   els.chatCount.textContent = `${n} chat${n === 1 ? "" : "s"} synced`;
 }
 
-// Build the project dropdown from whatever projects appear in the data.
+// All project checkboxes currently in the menu (including the fixed "No project").
+function projectCheckboxes() {
+  return [...els.projectMenu.querySelectorAll('input[type="checkbox"]')];
+}
+
+// The values (project ids, plus "none") that are currently ticked.
+function selectedProjectValues() {
+  return projectCheckboxes()
+    .filter((b) => b.checked)
+    .map((b) => b.value);
+}
+
+// Update the button label to reflect the current selection.
+function updateProjectLabel() {
+  const checked = projectCheckboxes().filter((b) => b.checked);
+  if (checked.length === 0) {
+    els.projectLabel.textContent = "Any project";
+  } else if (checked.length === 1) {
+    els.projectLabel.textContent = checked[0].closest("label").textContent.trim();
+  } else {
+    els.projectLabel.textContent = `${checked.length} projects`;
+  }
+}
+
+// A project box was toggled (or all/clear pressed): refresh label + results.
+function onProjectChange() {
+  updateProjectLabel();
+  render();
+}
+
+// Build the per-project checkboxes from whatever projects appear in the data,
+// keeping any selections the user already made.
 function populateProjectFilter() {
-  const current = els.projectSelect.value;
+  const prevSelected = new Set(selectedProjectValues());
   const projects = new Map(); // id -> name
   for (const conv of CACHE) {
     if (conv.projectId) projects.set(conv.projectId, conv.projectName || "Project");
   }
-  // Reset to the two fixed options, then add discovered projects (sorted).
-  els.projectSelect.length = 2; // keep "Any project" and "No project"
+  els.projectList.innerHTML = "";
   [...projects.entries()]
     .sort((a, b) => a[1].localeCompare(b[1]))
     .forEach(([id, name]) => {
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = name;
-      els.projectSelect.appendChild(opt);
+      const label = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = id;
+      if (prevSelected.has(id)) cb.checked = true;
+      cb.addEventListener("change", onProjectChange);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(" " + name));
+      els.projectList.appendChild(label);
     });
-  // Restore the previous selection if it still exists.
-  els.projectSelect.value = [...els.projectSelect.options].some((o) => o.value === current)
-    ? current
-    : "any";
+  updateProjectLabel();
 }
 
 // ---------------------------------------------------------------------------
@@ -448,7 +509,8 @@ function scopeText(conv, roleFilter) {
 function render() {
   const regexMode = els.regexToggle.checked;
   const roleFilter = els.roleSelect.value;
-  const projectFilter = els.projectSelect.value;
+  const selectedProjects = new Set(selectedProjectValues());
+  const projectActive = selectedProjects.size > 0;
   const sortMode = els.sortSelect.value;
   const fromTime = els.fromDate.value ? new Date(els.fromDate.value).getTime() : null;
   // Include the whole "to" day by adding ~24h.
@@ -468,7 +530,7 @@ function render() {
 
   const hasQuery = query.type === "terms" || query.type === "regex";
   const hasFilter =
-    projectFilter !== "any" || roleFilter !== "any" || fromTime || toTime;
+    projectActive || roleFilter !== "any" || fromTime || toTime;
 
   if (!hasQuery && !hasFilter) {
     showEmptyHint();
@@ -477,10 +539,13 @@ function render() {
 
   const matches = [];
   for (const conv of CACHE) {
-    // --- project filter ---
-    if (projectFilter === "none" && conv.projectId) continue;
-    if (projectFilter !== "any" && projectFilter !== "none" && conv.projectId !== projectFilter)
-      continue;
+    // --- project filter (match any of the ticked projects; "none" = no project) ---
+    if (projectActive) {
+      const inSelection = conv.projectId
+        ? selectedProjects.has(conv.projectId)
+        : selectedProjects.has("none");
+      if (!inSelection) continue;
+    }
 
     // --- date filter (by last-updated, falling back to created) ---
     const when = conv.updatedAt || conv.createdAt;

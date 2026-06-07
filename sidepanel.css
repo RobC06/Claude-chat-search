@@ -171,6 +171,90 @@ button:disabled {
   cursor: pointer;
 }
 
+/* Multi-select project filter (checkbox dropdown). */
+.dd-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.proj-btn {
+  font-size: 13px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+}
+
+.proj-btn > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-btn .caret {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.proj-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 180px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+}
+
+.proj-menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.proj-menu label:hover {
+  background: var(--hover);
+}
+
+.proj-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 2px;
+}
+
+.proj-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px 4px;
+}
+
+.proj-actions a {
+  color: var(--action);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.proj-actions a:hover {
+  text-decoration: underline;
+}
+
 .filters .help {
   display: inline-flex;
   align-items: center;
