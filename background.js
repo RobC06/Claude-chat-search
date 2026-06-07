@@ -1,13 +1,15 @@
 // background.js
 // Two jobs:
 //  1. Make clicking the toolbar icon open the side panel.
-//  2. Restrict the side panel to claude.ai tabs (so it doesn't linger on other
-//     tabs) — unless the user turns that off via the "Only on Claude.ai"
-//     checkbox in the panel. The choice is saved as `showOnlyOnClaude`.
+//  2. Keep the side panel scoped to claude.ai: it's available on claude.ai tabs
+//     and disabled (closed) on every other tab, so it doesn't linger when you
+//     switch away.
 //
 // Note: Chrome does NOT allow an extension to open the side panel on its own —
-// it can only open in response to a click. So there is no "auto-open"; this
-// just controls where the panel is *available*.
+// it can only open in response to a user gesture (the toolbar click). So there
+// is no true "auto-open" on visiting Claude; this only controls where the panel
+// is *available*. To disable a tab we call setOptions with `enabled: false` and
+// NO path — that's what actually closes an open panel on that tab.
 
 const PANEL_PATH = "sidepanel.html";
 const CLAUDE_PREFIX = "https://claude.ai/";
@@ -25,21 +27,15 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onStartup.addListener(reapplyAll);
 
-// Decide whether the side panel should be available on a given tab.
+// Enable the panel on claude.ai tabs, disable it everywhere else.
 async function applyForTab(tabId, url) {
   if (typeof tabId !== "number" || !url) return;
-
-  let onlyOnClaude = true;
   try {
-    const r = await chrome.storage.local.get("showOnlyOnClaude");
-    onlyOnClaude = r.showOnlyOnClaude !== false; // default: true
-  } catch (e) {
-    /* keep default */
-  }
-
-  const enabled = !onlyOnClaude || url.startsWith(CLAUDE_PREFIX);
-  try {
-    await chrome.sidePanel.setOptions({ tabId, path: PANEL_PATH, enabled });
+    if (url.startsWith(CLAUDE_PREFIX)) {
+      await chrome.sidePanel.setOptions({ tabId, path: PANEL_PATH, enabled: true });
+    } else {
+      await chrome.sidePanel.setOptions({ tabId, enabled: false });
+    }
   } catch (e) {
     // Some tabs (e.g. chrome:// pages) may reject setOptions; ignore.
   }
@@ -68,9 +64,4 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url || changeInfo.status === "complete") {
     applyForTab(tabId, tab && tab.url);
   }
-});
-
-// When the checkbox flips the setting, re-apply everywhere immediately.
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.showOnlyOnClaude) reapplyAll();
 });
