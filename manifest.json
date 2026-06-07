@@ -5,11 +5,23 @@
   "description": "Full-text search across all your Claude.ai conversations, including chats inside projects. Everything stays on your machine.",
   "permissions": ["sidePanel", "storage", "scripting", "tabs"],
   "host_permissions": ["https://claude.ai/*"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Claude Chat Search (click to open search panel)"
+    "default_title": "Claude Chat Search (click to open search panel)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "content_scripts": [
     {
