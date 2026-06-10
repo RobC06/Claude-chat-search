@@ -36,7 +36,29 @@ const API = {
       `/api/organizations/${orgId}/chat_conversations/${convId}?tree=True&rendering_mode=messages`
     );
   },
+  projectDocs(orgId, projectId) {
+    return this.json(`/api/organizations/${orgId}/projects/${projectId}/docs`);
+  },
+  projectFiles(orgId, projectId) {
+    return this.json(`/api/organizations/${orgId}/projects/${projectId}/files`);
+  },
 };
+
+// Pull any file attachments off a single message (uploads dropped into a chat).
+// The shape we've seen: message.files = [{ file_name, file_kind, created_at, ... }].
+function extractFiles(message) {
+  const out = [];
+  for (const f of message.files || []) {
+    if (f && f.file_name) {
+      out.push({
+        name: f.file_name,
+        kind: f.file_kind || null,
+        createdAt: f.created_at || message.created_at || null,
+      });
+    }
+  }
+  return out;
+}
 
 // Pull readable text out of a single chat message. Claude's API has used a few
 // different shapes over time, so we try the common ones.
@@ -169,11 +191,16 @@ async function syncAll(known) {
 
       try {
         const full = await API.conversation(orgId, c.uuid);
-        const messages = (full.chat_messages || []).map((m, i) => ({
+        const rawMsgs = full.chat_messages || [];
+        const messages = rawMsgs.map((m, i) => ({
           index: i,
           role: m.sender === "human" ? "You" : "Claude",
           text: extractText(m),
         }));
+        // Collect any files attached within this chat, so the Project Files tab
+        // can list them without re-fetching conversations.
+        const files = [];
+        for (const m of rawMsgs) files.push(...extractFiles(m));
         send({
           type: "SYNC_CONVERSATION",
           conversation: {
@@ -186,6 +213,7 @@ async function syncAll(known) {
             updatedAt: c.updated_at || null,
             url: `https://claude.ai/chat/${c.uuid}`,
             messages,
+            files,
           },
         });
         fetched++;
@@ -204,6 +232,64 @@ async function syncAll(known) {
   }
 
   send({ type: "SYNC_DONE", total: grandTotal, fetched, allIds });
+}
+
+// List every project across all orgs (for the Project Files tab's selector).
+async function listAllProjects() {
+  const orgs = await API.organizations();
+  const out = [];
+  for (const o of orgs || []) {
+    try {
+      const ps = await API.projects(o.uuid);
+      for (const p of ps || []) {
+        out.push({ id: p.uuid, name: p.name || "Project", orgId: o.uuid });
+      }
+    } catch (e) {
+      // skip an org we can't read
+    }
+  }
+  return out;
+}
+
+// Fetch a single project's files on demand: the knowledge "docs" (CORE, which
+// carry their text) and any uploaded "files". Returns a normalized shape.
+async function getProjectFiles(projectId, orgId) {
+  let candidates = orgId ? [orgId] : null;
+  if (!candidates) {
+    const orgs = await API.organizations();
+    candidates = (orgs || []).map((o) => o.uuid);
+  }
+  for (const oid of candidates) {
+    try {
+      const d = await API.projectDocs(oid, projectId);
+      const docsArr = Array.isArray(d) ? d : (d && d.docs) || [];
+      let filesArr = [];
+      try {
+        const f = await API.projectFiles(oid, projectId);
+        filesArr = Array.isArray(f) ? f : (f && (f.files || f.data)) || [];
+      } catch (e) {
+        filesArr = [];
+      }
+      return {
+        ok: true,
+        docs: docsArr.map((x) => ({
+          id: x.uuid,
+          name: x.file_name || "(untitled)",
+          content: typeof x.content === "string" ? x.content : "",
+          createdAt: x.created_at || null,
+        })),
+        files: filesArr.map((x) => ({
+          id: x.file_uuid || x.uuid || null,
+          name: x.file_name || "(file)",
+          kind: x.file_kind || null,
+          createdAt: x.created_at || null,
+        })),
+      };
+    } catch (e) {
+      // wrong org for this project — try the next one
+    }
+  }
+  return { ok: false, error: "Could not load this project's files." };
 }
 
 // Listen for commands from the side panel.
@@ -231,5 +317,21 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse({ ok: false, error: String((err && err.message) || err) })
       );
     return true; // keep the channel open for the async reply
+  }
+  if (msg.type === "GET_PROJECTS") {
+    listAllProjects()
+      .then((projects) => sendResponse({ ok: true, projects }))
+      .catch((err) =>
+        sendResponse({ ok: false, error: String((err && err.message) || err) })
+      );
+    return true;
+  }
+  if (msg.type === "GET_PROJECT_FILES") {
+    getProjectFiles(msg.projectId, msg.orgId)
+      .then(sendResponse)
+      .catch((err) =>
+        sendResponse({ ok: false, error: String((err && err.message) || err) })
+      );
+    return true;
   }
 });

@@ -7,80 +7,157 @@
     <link rel="stylesheet" href="sidepanel.css" />
   </head>
   <body>
-    <header>
-      <h1>Search for Claude Chats</h1>
-      <div id="chatCount" class="chat-count"></div>
-      <div id="lastSync" class="last-sync"></div>
-      <div id="status" class="status hidden"></div>
-      <div id="progressWrap" class="progress-wrap hidden">
-        <div id="progressBar" class="progress-bar"></div>
-      </div>
-    </header>
-
-    <p class="helper">
-      Claude automatically syncs chats to your computer for searching.
-      If you have problems, click <a id="syncLink" class="sync-link">Sync Chats</a>
-      to run a manual sync.
-    </p>
-
-    <div class="search-box">
-      <input
-        id="searchInput"
-        type="search"
-        placeholder='Search… use "quotes" for exact phrase'
-        autocomplete="off"
-      />
-      <div class="filters">
-        <label class="chk" title="Treat your search as a regular expression">
-          <input type="checkbox" id="regexToggle" /> regex
-        </label>
-        <span
-          class="help"
-          tabindex="0"
-          title="Regex = pattern matching for power users.&#10;&#10;Leave OFF for normal searches (type words, or &quot;quotes&quot; for an exact phrase).&#10;&#10;Turn ON to use patterns, e.g.:&#10;  colou?r  -> color or colour&#10;  cat|dog  -> cat OR dog&#10;  error \d+  -> error followed by a number&#10;&#10;In this mode, punctuation like . ? * ( ) becomes special, so it's not for plain text."
-          >?</span
-        >
-        <select id="roleSelect" title="Whose messages to search">
-          <option value="any">Anyone</option>
-          <option value="you">You</option>
-          <option value="claude">Claude</option>
-        </select>
-        <div class="dd-wrap" id="projectFilter">
-          <button
-            type="button"
-            class="proj-btn"
-            id="projectBtn"
-            title="Filter by project — tick any number"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            <span id="projectLabel">All projects</span
-            ><span class="caret" aria-hidden="true">▾</span>
-          </button>
-          <div class="proj-menu hidden" id="projectMenu">
-            <div class="proj-actions">
-              <a id="projectClear">Clear</a>
-            </div>
-            <label><input type="checkbox" value="none" id="projectNone" /> No project</label>
-            <label><input type="checkbox" id="projectAllBox" /> All projects</label>
-            <div class="proj-divider"></div>
-            <div id="projectList"></div>
-          </div>
-        </div>
-        <select id="sortSelect" title="Sort order">
-          <option value="relevance">Best match</option>
-          <option value="recent">Most recent</option>
-        </select>
-        <input type="date" id="fromDate" title="From date" />
-        <input type="date" id="toDate" title="To date" />
-      </div>
-      <div id="searchError" class="search-error hidden"></div>
+    <!-- Top tabs: chat search vs project-file search -->
+    <div class="tabbar">
+      <button type="button" class="tab chats-tab active" id="tabChats">Chats</button>
+      <button type="button" class="tab files-tab" id="tabFiles">Project Files</button>
     </div>
 
-    <div id="results" class="results"></div>
+    <!-- ===================== CHATS VIEW (existing) ===================== -->
+    <div id="chatsView" class="view">
+      <header>
+        <h1>Search for Claude Chats</h1>
+        <div id="chatCount" class="chat-count"></div>
+        <div id="lastSync" class="last-sync"></div>
+        <div id="status" class="status hidden"></div>
+        <div id="progressWrap" class="progress-wrap hidden">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </header>
+
+      <p class="helper">
+        Claude automatically syncs chats to your computer for searching.
+        If you have problems, click <a id="syncLink" class="sync-link">Sync Chats</a>
+        to run a manual sync.
+      </p>
+
+      <div class="search-box">
+        <input
+          id="searchInput"
+          type="search"
+          placeholder='Search… use "quotes" for exact phrase'
+          autocomplete="off"
+        />
+        <div class="filters">
+          <label class="chk" title="Treat your search as a regular expression">
+            <input type="checkbox" id="regexToggle" /> regex
+          </label>
+          <span
+            class="help"
+            tabindex="0"
+            title="Regex = pattern matching for power users.&#10;&#10;Leave OFF for normal searches (type words, or &quot;quotes&quot; for an exact phrase).&#10;&#10;Turn ON to use patterns, e.g.:&#10;  colou?r  -> color or colour&#10;  cat|dog  -> cat OR dog&#10;  error \d+  -> error followed by a number&#10;&#10;In this mode, punctuation like . ? * ( ) becomes special, so it's not for plain text."
+            >?</span
+          >
+          <select id="roleSelect" title="Whose messages to search">
+            <option value="any">Anyone</option>
+            <option value="you">You</option>
+            <option value="claude">Claude</option>
+          </select>
+          <div class="dd-wrap" id="projectFilter">
+            <button
+              type="button"
+              class="proj-btn"
+              id="projectBtn"
+              title="Filter by project — tick any number"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <span id="projectLabel">All projects</span
+              ><span class="caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="proj-menu hidden" id="projectMenu">
+              <div class="proj-actions">
+                <a id="projectClear">Clear</a>
+              </div>
+              <label><input type="checkbox" value="none" id="projectNone" /> No project</label>
+              <label><input type="checkbox" id="projectAllBox" /> All projects</label>
+              <div class="proj-divider"></div>
+              <div id="projectList"></div>
+            </div>
+          </div>
+          <select id="sortSelect" title="Sort order">
+            <option value="relevance">Best match</option>
+            <option value="recent">Most recent</option>
+          </select>
+          <input type="date" id="fromDate" title="From date" />
+          <input type="date" id="toDate" title="To date" />
+        </div>
+        <div id="searchError" class="search-error hidden"></div>
+      </div>
+
+      <div id="results" class="results"></div>
+    </div>
+
+    <!-- ===================== PROJECT FILES VIEW (new) ===================== -->
+    <div id="filesView" class="view hidden">
+      <header>
+        <h1 class="files-title">Project File List/Search</h1>
+      </header>
+
+      <!-- project selector + message -->
+      <div class="band band-top">
+        <div class="blabel">Project(s) Selector</div>
+        <div class="fmsg" id="fMsg1"></div>
+        <div class="dd-wrap" id="fProjectFilter">
+          <button type="button" class="proj-btn fproj-btn" id="fProjectBtn"
+                  aria-haspopup="true" aria-expanded="false">
+            <span id="fProjectLabel">Select projects</span
+            ><span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="proj-menu hidden" id="fProjectMenu">
+            <div class="proj-actions"><a id="fProjectClear">Clear</a></div>
+            <label><input type="checkbox" id="fProjectAllBox" /> All projects</label>
+            <div class="proj-divider"></div>
+            <div id="fProjectList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- list / search mode toggle (always shown) -->
+      <div class="modebar">
+        <label id="fModeListLbl" class="on">
+          <input type="checkbox" id="fModeList" checked /> List files
+        </label>
+        <label id="fModeSearchLbl">
+          <input type="checkbox" id="fModeSearch" /> Search files
+        </label>
+      </div>
+
+      <!-- search input (search mode only) -->
+      <div class="search-box files-search hidden" id="fSearchBox">
+        <input id="fSearchInput" type="search" placeholder="Search file names…" autocomplete="off" />
+      </div>
+
+      <!-- show/sort controls + message -->
+      <div class="band">
+        <div class="fmsg" id="fMsg2"></div>
+        <div class="subrow">
+          <label class="chk files-inside hidden" id="fInsideWrap">
+            <input type="checkbox" id="fInsideDocs" /> search inside documents
+          </label>
+          <span class="ctl">Show
+            <select class="mini" id="fShow">
+              <option value="core">CORE</option>
+              <option value="chat">Chats</option>
+              <option value="any">Anywhere</option>
+            </select>
+          </span>
+          <span class="ctl files-sort" id="fSortWrap">Sort
+            <select class="mini" id="fSort">
+              <option value="az">A → Z</option>
+              <option value="recent">Recently added</option>
+            </select>
+          </span>
+        </div>
+      </div>
+
+      <div class="list-head" id="fListHead"></div>
+      <div class="results" id="fResults"></div>
+    </div>
 
     <!-- Load the database helper first, then the panel logic. -->
     <script src="db.js"></script>
     <script src="sidepanel.js"></script>
+    <script src="files.js"></script>
   </body>
 </html>
