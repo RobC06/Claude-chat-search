@@ -72,7 +72,7 @@
   async function detectCurrentProject() {
     const url = await activeClaudeUrl();
     if (!url) return null;
-    let m = url.match(/claude\.ai\/project\/([0-9a-fA-F-]+)/);
+    let m = url.match(/claude\.ai\/projects?\/([0-9a-fA-F-]+)/);
     if (m) {
       const p = projectsById.get(m[1]);
       return p ? { id: p.id, name: p.name } : { id: m[1], name: "this project" };
@@ -151,6 +151,10 @@
   }
   function projBoxes() {
     return [...el.projList.querySelectorAll('input[type="checkbox"]')];
+  }
+  function syncSelectionToMenu() {
+    projBoxes().forEach((b) => (b.checked = selectedIds.has(b.value)));
+    syncAll();
   }
   function syncAll() {
     const boxes = projBoxes();
@@ -455,6 +459,35 @@
     group.appendChild(wrap);
     return group;
   }
+
+  // ---- follow the project the user navigates to ---------------------------
+  // Re-detect the current project when the Claude tab navigates or the active
+  // tab changes. If it's a *different* project than before, scope to it (the
+  // "defaults to current project" behavior). A manual multi-select is preserved
+  // as long as you stay within the same project.
+  async function maybeFollowProject() {
+    if (!inited) return;
+    const detected = await detectCurrentProject();
+    const newId = detected ? detected.id : null;
+    const oldId = currentProject ? currentProject.id : null;
+    if (newId === oldId) return; // no change
+    currentProject = detected;
+    if (detected && projectsById.has(detected.id)) {
+      selectedIds.clear();
+      selectedIds.add(detected.id);
+      syncSelectionToMenu();
+      updateProjLabel();
+    }
+    setMessages();
+    refreshFiles();
+  }
+
+  chrome.tabs.onUpdated.addListener((_id, changeInfo, tab) => {
+    if (changeInfo.url && tab && tab.url && tab.url.startsWith("https://claude.ai/")) {
+      maybeFollowProject();
+    }
+  });
+  chrome.tabs.onActivated.addListener(() => maybeFollowProject());
 
   // ---- react to fresh chat data (called from sidepanel.js refreshCache) ---
   window.onFilesCacheRefreshed = function () {
