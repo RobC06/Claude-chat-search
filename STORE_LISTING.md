@@ -16,38 +16,37 @@ computer — nothing is ever uploaded or sent anywhere.
 
 ## Detailed description
 
-Find anything you've ever discussed with Claude — in seconds.
+Find anything you've ever discussed with Claude — and any file in your projects — in seconds.
 
-Search for Claude Chats adds a fast, full-text search panel to claude.ai so you
-can dig up that conversation you half-remember without scrolling forever. It
-searches across all your chats, including the ones tucked inside projects.
+Search for Claude Chats adds a fast, private search panel to claude.ai, with two tabs:
 
-— Your conversations never leave your computer —
+• Chats — full-text search across all your conversations, including the ones tucked inside projects.
+• Project Files — list and search the files in your projects, without scrolling through each one by hand.
 
-This is the whole point of the extension: your chats are indexed locally, in
-your own browser, and the search runs entirely on your machine. Nothing is
-uploaded. There are no servers, no accounts, no analytics, and no third
-parties. The developer never sees your data, because the data never goes
-anywhere. When you close the extension or uninstall it, the local index goes
-with it.
+— Your data never leaves your computer —
 
-— What you can do —
+This is the whole point of the extension: your chats and project files are indexed locally, in your own browser, and search runs entirely on your machine. Nothing is uploaded. There are no servers, no accounts, no analytics, and no third parties. The developer never sees your data, because the data never goes anywhere. When you close or uninstall the extension, the local index goes with it.
 
-• Full-text search across every Claude.ai conversation, including chats inside
-  projects
-• See matches highlighted in context, with a count per conversation
-• Filter by who said it (you or Claude), by project, and by date range
+— Search your chats —
+
+• Full-text search across every Claude.ai conversation, including chats inside projects
+• Matches highlighted in context, with a count per conversation
+• Filter by who said it (you or Claude), by one or more projects, and by date range
 • Sort by best match or most recent
 • Use quotes for an exact phrase, or switch on regex for power searches
 • Jump straight to the original conversation with one click
-• A light/dark theme that automatically follows your Claude.ai setting
+
+— Browse and search your project files —
+
+• A dedicated Project Files tab that automatically focuses the project you're viewing — or pick several projects at once
+• List every file in a project, or search by file name
+• Search inside the text of your project knowledge documents, not just their names
+• Files grouped by project and tagged by where they live (project knowledge vs. attached in a chat)
+• Sort alphabetically or by most recently added
 
 — How it works —
 
-The extension reads your conversations using your existing Claude.ai login (the
-same session you're already using in your browser) and builds a private search
-index on your device. It keeps that index up to date quietly in the background,
-so search is always ready when you need it.
+The extension reads your conversations and project files using your existing Claude.ai login (the same session you're already using in your browser) and builds a private index on your device. It keeps that index up to date quietly in the background, so search is always ready when you need it.
 
 — Privacy —
 
@@ -60,16 +59,17 @@ endorsed by, or sponsored by Anthropic.
 
 ## Single purpose (dashboard field)
 
-Provide a private, local full-text search over the user's own Claude.ai
-conversations.
+Provide a private, local search over the user's own Claude.ai conversations and
+the files in their Claude projects.
 
 ## Permission justifications (dashboard fields)
 
 - **Host access to claude.ai (https://claude.ai/*):** Required to read the
-  user's own conversations so they can be indexed and searched. This is the
-  core function of the extension.
+  user's own conversations and project files so they can be indexed and
+  searched. This is the core function of the extension.
 - **scripting:** Used to run the indexing routine inside the user's claude.ai
-  tab to collect conversation text for the local index.
+  tab to collect conversation text and project file information for the local
+  index.
 - **tabs:** Used to locate the user's open claude.ai tab and to scope the
   search side panel so it appears only on claude.ai.
 - **storage:** Used to store the local search index and the user's settings on

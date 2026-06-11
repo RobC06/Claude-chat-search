@@ -160,6 +160,8 @@ async function refreshCache() {
   CACHE = await getAllConversations();
   updateChatCount();
   populateProjectFilter();
+  // Let the Project Files tab (files.js) react to fresh data, if it's loaded.
+  if (typeof onFilesCacheRefreshed === "function") onFilesCacheRefreshed();
 }
 
 function updateChatCount() {
