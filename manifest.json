@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search for Claude Chats",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Full-text search across all your Claude.ai conversations, including chats inside projects. Everything stays on your machine.",
   "permissions": ["sidePanel", "storage", "scripting", "tabs"],
   "host_permissions": ["https://claude.ai/*"],
