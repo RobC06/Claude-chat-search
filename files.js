@@ -24,6 +24,7 @@
     projMenu: document.getElementById("fProjectMenu"),
     projList: document.getElementById("fProjectList"),
     projAll: document.getElementById("fProjectAllBox"),
+    projNone: document.getElementById("fProjectNone"),
     projClear: document.getElementById("fProjectClear"),
 
     modeList: document.getElementById("fModeList"),
@@ -84,6 +85,8 @@
         const p = projectsById.get(conv.projectId);
         return { id: conv.projectId, name: (p && p.name) || conv.projectName || "this project" };
       }
+      // A loose chat (not in any project) → scope to "No project".
+      if (conv) return { id: "none", name: "No project" };
     }
     return null;
   }
@@ -119,7 +122,7 @@
     }
 
     currentProject = await detectCurrentProject();
-    if (currentProject && projectsById.has(currentProject.id)) {
+    if (currentProject && (currentProject.id === "none" || projectsById.has(currentProject.id))) {
       selectedIds.add(currentProject.id);
     }
     buildProjectMenu();
@@ -148,25 +151,30 @@
       el.projList.appendChild(label);
     }
     syncAll();
+    el.projNone.checked = selectedIds.has("none");
   }
   function projBoxes() {
     return [...el.projList.querySelectorAll('input[type="checkbox"]')];
   }
   function syncSelectionToMenu() {
     projBoxes().forEach((b) => (b.checked = selectedIds.has(b.value)));
+    el.projNone.checked = selectedIds.has("none");
     syncAll();
   }
   function syncAll() {
     const boxes = projBoxes();
     el.projAll.checked = boxes.length > 0 && boxes.every((b) => b.checked);
   }
+  function nameForId(id) {
+    if (id === "none") return "No project";
+    const p = projectsById.get(id);
+    return (p && p.name) || "project";
+  }
   function updateProjLabel() {
     const n = selectedIds.size;
     if (n === 0) el.projLabel.textContent = "Select projects";
-    else if (n === 1) {
-      const p = projectsById.get([...selectedIds][0]);
-      el.projLabel.textContent = (p && p.name) || "1 project";
-    } else el.projLabel.textContent = `${n} projects`;
+    else if (n === 1) el.projLabel.textContent = nameForId([...selectedIds][0]);
+    else el.projLabel.textContent = `${n} selected`;
   }
 
   el.projBtn.addEventListener("click", (e) => {
@@ -189,10 +197,17 @@
     updateProjLabel();
     refreshFiles();
   });
+  el.projNone.addEventListener("change", () => {
+    if (el.projNone.checked) selectedIds.add("none");
+    else selectedIds.delete("none");
+    updateProjLabel();
+    refreshFiles();
+  });
   el.projClear.addEventListener("click", () => {
     selectedIds.clear();
     projBoxes().forEach((b) => (b.checked = false));
     el.projAll.checked = false;
+    el.projNone.checked = false;
     updateProjLabel();
     refreshFiles();
   });
@@ -235,6 +250,7 @@
 
   // ---- gathering items ----------------------------------------------------
   function coreItems(projectId) {
+    if (projectId === "none") return []; // loose chats have no project CORE
     const pf = fileCache.get(projectId);
     if (!pf) return null; // not fetched yet
     const items = [];
@@ -247,7 +263,8 @@
   function chatItems(projectId) {
     const items = [];
     for (const c of CACHE) {
-      if (c.projectId !== projectId) continue;
+      const inScope = projectId === "none" ? !c.projectId : c.projectId === projectId;
+      if (!inScope) continue;
       for (const f of c.files || [])
         items.push({ name: f.name, source: "chat", content: "", createdAt: f.createdAt, url: c.url });
     }
@@ -257,6 +274,8 @@
   function itemsForProject(projectId) {
     const show = el.show.value;
     const chat = chatItems(projectId);
+    // "No project" has no CORE — always show its chat files regardless of toggle.
+    if (projectId === "none") return { items: chat, loading: false };
     if (show === "chat") return { items: chat, loading: false };
     const core = coreItems(projectId);
     if (core === null) return { items: [], loading: true };
@@ -300,7 +319,7 @@
   // Make sure CORE files are loaded for the selected projects (when needed).
   async function ensureCoreLoaded() {
     if (el.show.value === "chat") return; // chat-only needs no fetch
-    const need = [...selectedIds].filter((id) => !fileCache.has(id));
+    const need = [...selectedIds].filter((id) => id !== "none" && !fileCache.has(id));
     if (!need.length) return;
     for (const id of need) {
       try {
@@ -340,7 +359,7 @@
     if (!inited) return;
     const list = el.modeList.checked;
     const selected = [...selectedIds]
-      .map((id) => projectsById.get(id))
+      .map((id) => (id === "none" ? { id: "none", name: "No project" } : projectsById.get(id)))
       .filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name));
 
