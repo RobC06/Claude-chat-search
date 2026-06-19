@@ -85,8 +85,8 @@
         const p = projectsById.get(conv.projectId);
         return { id: conv.projectId, name: (p && p.name) || conv.projectName || "this project" };
       }
-      // A loose chat (not in any project) → scope to "No project".
-      if (conv) return { id: "none", name: "No project" };
+      // A loose chat (not in any project) → scope to "Loose chats".
+      if (conv) return { id: "none", name: "Loose chats" };
     }
     return null;
   }
@@ -166,7 +166,7 @@
     el.projAll.checked = boxes.length > 0 && boxes.every((b) => b.checked);
   }
   function nameForId(id) {
-    if (id === "none") return "No project";
+    if (id === "none") return "Loose chats";
     const p = projectsById.get(id);
     return (p && p.name) || "project";
   }
@@ -235,7 +235,11 @@
     const list = el.modeList.checked;
     const A = list ? "File list" : "Searching";
     const v = list ? "list" : "search";
-    if (currentProject) {
+    if (currentProject && currentProject.id === "none") {
+      el.msg1.innerHTML =
+        `This chat isn't in a project, so ${A.toLowerCase()} defaults to your <span class="proj">loose chats</span>.` +
+        `<br>To ${v} files in a project, click the dropdown above.`;
+    } else if (currentProject) {
       el.msg1.innerHTML =
         `${A} defaults to your current project — <span class="proj">${escapeHtml(currentProject.name)}</span>.` +
         `<br>To ${v} files from other projects, click the dropdown above.`;
@@ -359,7 +363,7 @@
     if (!inited) return;
     const list = el.modeList.checked;
     const selected = [...selectedIds]
-      .map((id) => (id === "none" ? { id: "none", name: "No project" } : projectsById.get(id)))
+      .map((id) => (id === "none" ? { id: "none", name: "Loose chats" } : projectsById.get(id)))
       .filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name));
 
