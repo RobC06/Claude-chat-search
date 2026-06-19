@@ -286,8 +286,13 @@ async function startSync(auto = false) {
   try {
     await ensureContentScript(tab.id);
     // Tell the content script what we already have, so it only fetches changes.
+    // We only mark a chat "known" (skip re-fetching) if we've already captured
+    // its file list — so chats synced before the Project Files feature get
+    // re-fetched once to backfill the files attached inside them.
     const known = {};
-    for (const c of CACHE) known[c.id] = c.updatedAt || "";
+    for (const c of CACHE) {
+      if (Array.isArray(c.files)) known[c.id] = c.updatedAt || "";
+    }
     await chrome.tabs.sendMessage(tab.id, { type: "START_SYNC", known });
   } catch (err) {
     finishSync();
